@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="{{ url_for('static', filename='summary.css') }}">
+        <title>Summary Page</title>
+    </head>
+    <body>
+        <div class="main">
+            <nav>
+                <h1><a href="{{ url_for('homepageafterlogin') }}">MCAS</a></h1>
+                <div class="menu">
+                    <ul>
+                        <li><a href="{{ url_for('homepageafterlogin') }}">Home</a></li>
+                        <a href="{{ url_for('user') }}"><ion-icon name="person-circle-outline"></ion-icon></a>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+        <div class="summarypage">
+            <h1>Generated Summary</h1>
+            <div class="outputbox">
+                <textarea id="summaryOutput" rows="10" cols="50" readonly placeholder="Generating Summary......"></textarea>
+            </div>
+        </div>
+        <div class="bookmark">
+            <button>Bookmark<ion-icon name="bookmark-outline"></ion-icon></button>
+        </div>
+        <div class="generatepdf">
+            <button onclick="generatePDF()">Generate PDF</button>
+        </div>
+        <div class="footer">
+            <h2>About US:</h2>
+            <h4>MCAS</h4>
+            <p>MCAS- A simple tool to generate summaries of videos and improve your efficiency.</p>
+            <div class="contact">
+                <h5>Contact us:</h5>
+                <p>MCAS@gmail.com</p>
+                <ion-icon name="mail-outline"></ion-icon>
+            </div>
+            <div class="copyright">
+                <h6>Copyright 2024 MCAS. All rights reserved.</h6>
+            </div>
+        </div>
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const videoId = sessionStorage.getItem("videoId");
+    
+                if (videoId) {
+                    // Send the video ID to the backend for transcription and summarization
+                    fetch("/generate_summary", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ videoId: videoId })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.summary) {
+                            // Display the summary in the textarea
+                            document.getElementById("summaryOutput").value = data.summary;
+                        } else {
+                            document.getElementById("summaryOutput").value = "No summary available.";
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                        document.getElementById("summaryOutput").value = "Error generating summary.";
+                    });
+                } else {
+                    document.getElementById("summaryOutput").value = "No video ID provided.";
+                }
+            });
+        </script>
+        <script>
+            function generatePDF() 
+            {
+                // Redirect to the /download_pdf route to trigger the download
+                window.location.href = '/download_pdf';
+            }
+
+        </script>
+    </body>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    </body>
+</html>

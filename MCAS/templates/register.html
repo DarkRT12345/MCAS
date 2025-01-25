@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+        <title>Register page</title>
+    </head>
+    <body>
+        <div class="main">
+            <nav>
+                <h1><a href="{{ url_for('home') }}">MCAS</a></h1>
+                <div class="menu">
+                    <ul>
+                        <li><a href="{{ url_for('home') }}">Home</a></li>
+                        <li><a href="{{ url_for('Login') }}">Login</a></li>
+                        <li><a href="{{ url_for('register') }}">Register</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+        <section>
+                <div class="form-box">
+                    <div class="form-value">
+                        <form action="{{ url_for('register') }}" method="POST">
+                            <h2>Register</h2>
+                            {% if error %}
+                            <p style="color: white;">{{ error }}</p>
+                            {% endif %}   
+                            <div class="inputbox">
+                                <ion-icon name="person-outline"></ion-icon>
+                                <input type="text" name="username" required>
+                                <label for="">Enter Username</label>
+                            </div> 
+                            <div class="inputbox">
+                                <ion-icon name="mail-outline"></ion-icon>
+                                <input type="email" name="email" required>
+                                <label for="">Enter Email</label>
+                            </div> 
+                            <div class="inputbox">
+                                <ion-icon name="lock-closed-outline"></ion-icon>
+                                <input type="password" name="password" required>
+                                <label for="">Create Password</label>
+                            </div> 
+                            <div class="Terms">
+                                <label for=""><input type="checkbox" required>I agree to the terms and conditions.</label>
+                            </div>
+                            <button type="submit">Register</button>
+                            <div class="register">
+                                <p>Already have an account? <a href="{{ url_for('Login') }}">Login</a></p>
+                            </div>
+                        </form>                        
+                    </div>
+                </div>
+                      
+        </section>
+        
+        <div class="footer">
+        </div>
+        <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    </body>
+</html>
