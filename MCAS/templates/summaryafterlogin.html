@@ -23,7 +23,7 @@
             </div>
         </div>
         <div class="bookmark">
-            <button>Bookmark<ion-icon name="bookmark-outline"></ion-icon></button>
+            <button id="bookmarkButton">Bookmark<ion-icon name="bookmark-outline"></ion-icon></button>
         </div>
         <div class="generatepdf">
             <button onclick="generatePDF()">Generate PDF</button>
@@ -44,7 +44,6 @@
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const videoId = sessionStorage.getItem("videoId");
-    
                 if (videoId) {
                     // Send the video ID to the backend for transcription and summarization
                     fetch("/generate_summary", {
@@ -71,6 +70,42 @@
                     document.getElementById("summaryOutput").value = "No video ID provided.";
                 }
             });
+        </script>
+        <script>
+             // Bookmark button click event
+        document.getElementById("bookmarkButton").addEventListener("click", function () {
+            const summaryText = document.getElementById("summaryOutput").value;
+            const videoId = sessionStorage.getItem("videoId");
+
+            if (summaryText && videoId) {
+                // Send the summary and videoId to the backend to store
+                fetch("/store", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        input_type: "video",  // Assuming it's a video, adjust if necessary
+                        input_name: videoId,  // Using videoId as the name
+                        output_data: summaryText
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        alert("Summary bookmarked successfully!");
+                    } else {
+                        alert("Error bookmarking the summary.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("Error bookmarking the summary.");
+                });
+            } else {
+                alert("No summary or video ID found to bookmark.");
+            }
+        });
         </script>
         <script>
             function generatePDF() 

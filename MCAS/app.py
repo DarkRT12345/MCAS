@@ -7,15 +7,20 @@ from datetime import datetime
 import subprocess
 import json
 from fpdf import FPDF
+from werkzeug.utils import secure_filename
 from datetime import datetime, timezone
+import os
 app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb://localhost:27017/Multimedia-Content-Analysing-System"
+app.config["UPLOAD_FOLDER"] = "static/uploads"
 mongo = PyMongo(app)
-
 app.secret_key = "9b1c8c49d3c3e7e456f7ab97d8332a19"
 bcrypt = Bcrypt(app)
-
 users_collection = mongo.db.users
+
+# Utility function to check allowed file types
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def home():
@@ -77,6 +82,22 @@ def register():
 @app.route('/homepageafterlogin', methods=['GET', 'POST'])
 def homepageafterlogin():
     return render_template('homepageafterlogin.html')
+
+@app.route('/savedsummarypage', methods=['GET'])
+def savedsummarypage():
+    if 'user_id' not in session:
+        return redirect(url_for('Login'))  # Redirect if not logged in
+
+    # Fetch saved summaries for the logged-in user
+    user_id = ObjectId(session['user_id'])
+    summaries = list(users_collection.find({"user_id": user_id, "input_type": "video"}))
+
+    # Convert ObjectId to string for JSON serialization
+    for summary in summaries:
+        summary["_id"] = str(summary["_id"])
+
+    return render_template('savedsummarypage.html', summaries=summaries)
+
 @app.route('/summary')
 def summary():
     return render_template('summary.html')
@@ -84,18 +105,32 @@ def summary():
 def summaryafterlogin():
     return render_template('summaryafterlogin.html')
 
-@app.route('/user')
+@app.route('/user', methods=['GET', 'POST'])
 def user():
-    # Fetch the logged-in user's details from the database
-    user = users_collection.find_one({"_id": ObjectId(session['user_id'])})
+    if 'user_id' not in session:
+        return redirect(url_for('Login'))  # Redirect if not logged in
 
-    if not user:
-        return redirect(url_for('Login'))  # Redirect to login if user not found (e.g., session expired)
-
-    # Convert MongoDB ObjectId to string
-    user['_id'] = str(user['_id'])
+    user_id = ObjectId(session['user_id'])
+    user = users_collection.find_one({"_id": user_id})
 
     return render_template('user.html', user=user)
+# Update "About Me" section
+@app.route('/update_about', methods=['POST'])
+def update_about():
+    if 'user_id' not in session:
+        return redirect(url_for('Login'))  # Redirect if not logged in
+
+    user_id = ObjectId(session['user_id'])
+    about_me = request.form.get('aboutMe')
+
+    # Update the "bio" field in the user's document
+    result = users_collection.update_one({"_id": user_id}, {"$set": {"bio": about_me}})
+    
+    # Check if the update was successful (matched count > 0)
+    if result.matched_count > 0:
+        return jsonify({"success": True})
+    else:
+        return jsonify({"success": False, "error": "Failed to update the bio"}), 400
 
 
 @app.route('/generate_summary', methods=['POST'])
@@ -115,6 +150,13 @@ def generate_summary():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 @app.route("/store", methods=["POST"])
 def store_analysis_results():
     data = request.json  # Get JSON data from request
@@ -126,6 +168,7 @@ def store_analysis_results():
         return jsonify({"error": "Missing required fields"}), 400
 
     document = {
+        "user_id": ObjectId(session['user_id']),
         "input_type": input_type,
         "input_name": input_name,
         "output_data": output_data,
@@ -133,21 +176,6 @@ def store_analysis_results():
     }
     inserted_id = users_collection.insert_one(document).inserted_id
     return jsonify({"message": "Data stored successfully", "id": str(inserted_id)})
-
-@app.route("/retrieve", methods=["GET"])
-def retrieve_all_documents():
-    documents = list(users_collection.find())
-    for doc in documents:
-        doc["_id"] = str(doc["_id"])  # Convert ObjectId to string for JSON
-    return jsonify(documents)
-
-
-@app.route("/retrieve/type/<input_type>", methods=["GET"])
-def retrieve_documents_by_type(input_type):
-    documents = list(users_collection.find({"input_type": input_type}))
-    for doc in documents:
-        doc["_id"] = str(doc["_id"])
-    return jsonify(documents)
 
 @app.route('/download_pdf', methods=['GET'])
 def download_pdf():

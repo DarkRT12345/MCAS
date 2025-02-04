@@ -41,6 +41,7 @@ nav{
 .menu ul ion-icon:hover{
     color: black;
 }
+
 .menu ul li a{
     color: white;
     text-decoration: none;
@@ -96,7 +97,7 @@ button:hover{
 .inputbox{
     position: absolute;
     top: 45%;
-    left: 25%;
+    left: 24%;
     width:45%;
     height: 45px;
     border-radius: 40px;
@@ -117,7 +118,22 @@ button:hover{
     padding: 0 35px 0 5px;
     color: white;
 }
-
+input[type="text"] {
+    /* Styles for the input box */
+    border-radius: 30px;
+    outline: none;
+  }
+  
+  input[type="text"]::-webkit-autofill {
+    background-color: transparent !important;
+    color: black; /* Change color as needed */
+  }
+  
+  input[type="text"]::-webkit-autofill:hover,
+  input[type="text"]::-webkit-autofill:focus {
+    background-color: transparent !important;
+  }
+  
 .tutorial{
     display: flex;
     justify-content: center;
@@ -130,21 +146,21 @@ button:hover{
 }
 .tutorial h1{
     position: absolute;
-    top: 77%;
+    top: 71%;
     align-items: center;
     font-size:60px;
     color: white;
 }
 .tutorial h4{
     position: absolute;
-    top: 87%;
+    top: 81%;
     align-items: center;
     font-size:30px;
     color: white;
 }
 .step1{
     position: absolute;
-    top: 93%;
+    top: 87%;
     left: 20%;
     font-size:28px;
     color: white;
@@ -157,7 +173,7 @@ button:hover{
 }
 .step2{
     position: absolute;
-    top: 129%;
+    top: 125%;
     left: 20%;
     font-size:28px;
     color: white;
@@ -170,7 +186,7 @@ button:hover{
 }
 .step3{
     position: absolute;
-    top: 159%;
+    top: 157%;
     left: 20%;
     font-size:28px;
     color: white;
@@ -198,23 +214,23 @@ button:hover{
 }
 .footer h4{
     position: absolute;
-    bottom: 59%;
+    bottom: 57%;
     left: 13%;
     color: white;
     font-size: 26px;
 }
 .footer p{
     position: absolute;
-    bottom: 30%;
+    bottom: 20%;
     left: 13%;
     color: white;
-    font-size: 20px;
+    font-size: 18px;
     max-width: 50vh;
 }
 .contact p{
     position: absolute;
-    bottom: 46%;
-    left: 73%;
+    bottom: 44%;
+    left: 72%;
     color: white;
     font-size: 20px;
 }
@@ -224,7 +240,7 @@ button:hover{
 .contact h5{
     position: absolute;
     bottom: 59%;
-    left: 73%;
+    left: 72%;
     color: white;
     font-size: 20px;
 }

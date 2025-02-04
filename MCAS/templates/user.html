@@ -1,54 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <link rel="stylesheet" href="{{ url_for('static', filename='user.css') }}">
-        <title>User Profile</title>
-    </head>
-    <body>
-        <div class="main">
-            <nav>
-                <h1><a href="{{ url_for('homepageafterlogin') }}">MCAS</a></h1>
-                <div class="menu">
-                    <ul>
-                        <li><a href="{{ url_for('homepageafterlogin') }}">Home</a></li>
-                        <a href="{{ url_for('user') }}"><ion-icon name="person-circle-outline"></ion-icon></a>
-                    </ul>
-                </div>
-            </nav>
-        </div>
-        <div class="userdetails">
-            <div class="profile-container">
-                <div class="profile-header">
-                    <img src="{{ url_for('static', filename='profile.jpg') }}" alt="Profile Picture" id="profilePicture">
-                    <h2 id="userName">{{ user.username }}</h2>
-                    <p id="userEmail">{{ user.email }}</p>
-                </div>
-                <div class="profile-details">
-                    <h3>About Me</h3>
-                    <p id="userBio">test</p>
-                </div>
-                <form action="{{ url_for('home') }}">
-                    <button>Logout</button>
+<head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='user.css') }}">
+    <title>User Profile</title>
+</head>
+<body>
+    <div class="main">
+        <nav>
+            <h1><a href="{{ url_for('homepageafterlogin') }}">MCAS</a></h1>
+            <div class="menu">
+                <ul>
+                    <li><a href="{{ url_for('homepageafterlogin') }}">Home</a></li>
+                    <a href="{{ url_for('user') }}"><ion-icon name="person-circle-outline"></ion-icon></a>
+                </ul>
+            </div>
+        </nav>
+    </div>
+    <div class="userdetails">
+        <div class="profile-container">
+            <div class="profile-header">
+                <img src="{{ url_for('static', filename='profile.jpg') }}" alt="Profile Picture" id="profilePicture">
+                <h2 id="userName">{{ user.username }}</h2>
+                <p id="userEmail">{{ user.email }}</p>
+            </div>
+            <div class="profile-details">
+                <h3>About Me</h3>
+                <p id="userBio">{{ user.bio }}</p>
+                <form id="aboutMeForm" action="{{ url_for('update_about') }}" method="POST">
+                    <textarea name="aboutMe" id="aboutMe" rows="5" style="display: none; width: 95%;" placeholder="Write something about yourself...">{{ user.bio }}</textarea>
+                    <div id="editSaveButtons">
+                        <button id="editButton" type="button">Edit</button>
+                        <button id="saveButton" type="submit" style="display: none;">Save</button>
+                    </div>
                 </form>
+                <p id="feedback" style="color: green; display: none;">Saved successfully!</p>
             </div>
+            <div class="savedsummaries">
+                <h3><a href="{{ url_for('savedsummarypage') }}">Saved Summaries</a></h3>
+            </div>
+            <form action="{{ url_for('home') }}">
+                <button>Logout</button>
+            </form>
         </div>
-       
-        <div class="footer">
-            <h2>About US:</h2>
-            <h4>MCAS</h4>
-            <p>MCAS- A simple tool to generate summaries of videos and improve your efficiency.</p>
-            <div class="contact">
-                <h5>Contact us:</h5>
-                <p>MCAS@gmail.com</p>
-                <ion-icon name="mail-outline"></ion-icon>
-            </div>
-            <div class="copyright">
-                <h6>Copyright 2024 MCAS. All rights reserved.</h6>
-            </div>
-        </div>   
-    </body>
+    </div>
+    <div class="footer">
+        <h2>About US:</h2>
+        <h4>MCAS</h4>
+        <p>MCAS- A simple tool to generate summaries of videos and improve your efficiency.</p>
+        <div class="contact">
+            <h5>Contact us:</h5>
+            <p>MCAS@gmail.com</p>
+            <ion-icon name="mail-outline"></ion-icon>
+        </div>
+        <div class="copyright">
+            <h6>Copyright 2024 MCAS. All rights reserved.</h6>
+        </div>
+    </div>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-    </body>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <script>
+        const editButton = document.getElementById("editButton");
+        const saveButton = document.getElementById("saveButton");
+        const aboutText = document.getElementById("userBio");
+        const aboutTextarea = document.getElementById("aboutMe");
+        const aboutMeForm = document.getElementById("aboutMeForm");
+        const feedback = document.getElementById("feedback");
+
+        editButton.addEventListener("click", function () {
+            aboutText.style.display = "none";
+            aboutTextarea.style.display = "block";
+            editButton.style.display = "none";
+            saveButton.style.display = "inline-block";
+        });
+
+        aboutMeForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const formData = new FormData(aboutMeForm);
+
+            fetch(aboutMeForm.action, {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())  // Expect a JSON response
+            .then(data => {
+                if (data.success) {
+                    aboutText.innerText = aboutTextarea.value;
+                    aboutText.style.display = "block";
+                    aboutTextarea.style.display = "none";
+                    editButton.style.display = "inline-block";
+                    saveButton.style.display = "none";
+                    feedback.style.display = "block";
+                    feedback.textContent = "Saved successfully!";
+                    setTimeout(() => feedback.style.display = "none", 3000);
+                } else {
+                    feedback.style.display = "block";
+                    feedback.textContent = "Failed to save. Please try again.";
+                    feedback.style.color = "red";
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                feedback.style.display = "block";
+                feedback.textContent = "An error occurred.";
+                feedback.style.color = "red";
+            });
+
+        });
+    </script>
+</body>
 </html>
-    
