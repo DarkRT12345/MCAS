@@ -28,6 +28,7 @@
         <div class="button">
             <button onclick="validateAndRedirect()">Generate Summary</button>
         </div>
+        <div class="sumtext"><h2><a href="{{ url_for('textsummary') }}">Would you like to enter text instead?</a></h2></div>
           
         <script>
             function validateAndRedirect() {
@@ -48,7 +49,6 @@
                 }
             }
         </script>
-          
         <div class="tutorial">
             <h1>How to Summarize Videos?</h1>
             <h4>Following steps can be followed:</h4>

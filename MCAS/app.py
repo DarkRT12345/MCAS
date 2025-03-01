@@ -83,6 +83,14 @@ def register():
 def homepageafterlogin():
     return render_template('homepageafterlogin.html')
 
+@app.route('/textsummary')
+def textsummary():
+    return render_template('textsummary.html')
+
+@app.route('/textsummaryafterlogin')
+def textsummaryafterlogin():
+    return render_template('textsummaryafterlogin.html')
+
 @app.route('/savedsummarypage', methods=['GET'])
 def savedsummarypage():
     if 'user_id' not in session:
@@ -104,7 +112,12 @@ def summary():
 @app.route('/summaryafterlogin')
 def summaryafterlogin():
     return render_template('summaryafterlogin.html')
-
+@app.route('/summarypagefortext')
+def summarypagefortext():
+    return render_template('summarypagefortext.html')
+@app.route('/summarypageafterloginfortext')
+def summarypageafterloginfortext():
+    return render_template('summarypageafterloginfortext.html')
 @app.route('/user', methods=['GET', 'POST'])
 def user():
     if 'user_id' not in session:
@@ -131,6 +144,31 @@ def update_about():
         return jsonify({"success": True})
     else:
         return jsonify({"success": False, "error": "Failed to update the bio"}), 400
+
+
+@app.route('/generate_text_summary', methods=['POST'])
+def generate_text_summary():
+    data = request.get_json()  # Get JSON data from the request
+    user_text = data.get("text")  # Extract text from JSON
+
+    if not user_text or not user_text.strip():
+        return jsonify({"error": "Enter some text"}), 400
+
+    try:
+        # Run testsummary.py and send the text via stdin
+        result = subprocess.run(
+            ['python', 'testsummary.py'],
+            input=user_text,  # Pass the text as input
+            capture_output=True,
+            text=True
+        )
+
+        summary = result.stdout.strip()
+
+        return jsonify({"summary": summary}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/generate_summary', methods=['POST'])

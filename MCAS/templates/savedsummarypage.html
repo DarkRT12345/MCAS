@@ -29,6 +29,19 @@
                         </li>
                     {% endfor %}
                 </ul>
+                <!-- Text Summaries Section -->
+
+        <ul>
+            {% for summary in summaries %}
+                {% if summary.input_type == "text" %}
+                <h4>Text Summaries:</h4>
+                    <li>
+                        <p>{{ summary.output_data }}</p>
+                        <small>Saved on: {{ summary.created_at }}</small>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
             {% else %}
                 <p>No saved summaries found.</p>
             {% endif %}

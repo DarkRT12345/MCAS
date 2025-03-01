@@ -1,67 +1,47 @@
-from flask import Flask, request, render_template
-import re
 from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
 from language_tool_python import LanguageTool
-from youtube_transcript_api import YouTubeTranscriptApi
-import json
 import sys
 
+# Initialize grammar correction tool
 tool = LanguageTool('en-US')
 
-def download_youtube_subtitle(video_id, output_file='transcriptofvid.txt', language='en'):
-    """
-    Download subtitles of the YouTube video with the given video ID and save them to a file.
-    """
-    try:
-        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[language])
-        subtitle_text = " ".join([entry['text'] for entry in transcript])
-        
-        # Save transcript to a file
-        with open(output_file, 'w', encoding='utf-8') as f:
-            f.write(subtitle_text)
-        
-        return subtitle_text
-    except Exception as e:
-        print(f"An error occurred while downloading subtitles: {e}")
-        return None
+# Load tokenizer and model
+model_path = "C:/Users/User/Desktop/Assignment/New folder/testcorrectmodel"
+tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
+model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+summarizer = pipeline("summarization", model=model, tokenizer=tokenizer)
 
 def chunk_text(text, chunk_size=500):
-    """Splits text into smaller chunks of specified size for summarization."""
+    """Splits text into smaller chunks for summarization."""
     words = text.split()
     for i in range(0, len(words), chunk_size):
         yield " ".join(words[i:i + chunk_size])
 
-
-
-video_id = "APC5RQ29V2I"
-transcript = download_youtube_subtitle(video_id)
 def summarize_text(text, max_length=150):
-    tokenizer = AutoTokenizer.from_pretrained("C:/Users/User/Desktop/Assignment/New folder/testcorrectmodel", use_fast=False)
-    model = AutoModelForSeq2SeqLM.from_pretrained("C:/Users/User/Desktop/Assignment/New folder/testcorrectmodel")
-    summarizer = pipeline("summarization", model=model, tokenizer=tokenizer)
-    
+    """Summarizes the given text."""
     summary = summarizer(text, max_length=max_length, min_length=50, do_sample=False)
     return summary[0]['summary_text']
 
-
 def post_process_summary(summary):
-    """
-    Use LanguageTool to correct grammar and punctuation in the summary.
-    """
-    corrected_summary = tool.correct(summary)
-    return corrected_summary
+    """Corrects grammar and punctuation in the summary."""
+    return tool.correct(summary)
 
-
-
-chunked_summary = []
-for chunk in chunk_text(transcript, chunk_size=500):
-    chunked_summary.append(summarize_text(chunk))
+if __name__ == "__main__":
+    input_text = sys.stdin.read().strip()
     
-# Combine summaries of each chunk
-final_summary = " ".join(chunked_summary)
-corrected_summary = post_process_summary(final_summary)
+    if not input_text:
+        print("Error: No input text provided.")
+        sys.exit(1)
 
-print (corrected_summary)
-output_summary_file = 'summary.txt'
-with open(output_summary_file, 'w', encoding='utf-8') as file:
-    file.write(corrected_summary)
+    # Summarize in chunks
+    chunked_summary = [summarize_text(chunk) for chunk in chunk_text(input_text, chunk_size=500)]
+    
+    # Combine chunks and correct grammar
+    final_summary = " ".join(chunked_summary)
+    corrected_summary = post_process_summary(final_summary)
+
+    # Print and save summary
+    print(corrected_summary)
+    
+    with open("summary.txt", "w", encoding="utf-8") as file:
+        file.write(corrected_summary)
