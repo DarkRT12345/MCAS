@@ -1,43 +1,22 @@
 from bson import ObjectId
-from flask import Flask, request, jsonify, render_template, send_file, session, redirect, url_for
+from flask import Flask, request, jsonify, render_template, send_file,session,redirect, url_for
 from flask_pymongo import PyMongo
 from pymongo import MongoClient
 from flask_bcrypt import Bcrypt
-from datetime import datetime, timezone
+from datetime import datetime
 import subprocess
 import json
-import re
 from fpdf import FPDF
 from werkzeug.utils import secure_filename
+from datetime import datetime, timezone
 import os
-
 app = Flask(__name__)
-
-# Configuration - In production, use environment variables
-app.config["MONGO_URI"] = os.environ.get("MONGO_URI", "mongodb://localhost:27017/Multimedia-Content-Analysing-System")
+app.config["MONGO_URI"] = "mongodb://localhost:27017/Multimedia-Content-Analysing-System"
 app.config["UPLOAD_FOLDER"] = "static/uploads"
-app.secret_key = os.environ.get("SECRET_KEY", "9b1c8c49d3c3e7e456f7ab97d8332a19")
-app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-
 mongo = PyMongo(app)
+app.secret_key = "9b1c8c49d3c3e7e456f7ab97d8332a19"
 bcrypt = Bcrypt(app)
 users_collection = mongo.db.users
-
-# Validation helper functions
-def validate_email(email):
-    """Validate email format"""
-    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(email_regex, email) is not None
-
-def validate_password(password):
-    """Validate password strength - at least 8 characters"""
-    return len(password) >= 8
-
-def validate_username(username):
-    """Validate username - alphanumeric and underscores, 3-20 characters"""
-    return 3 <= len(username) <= 20 and re.match(r'^[a-zA-Z0-9_]+$', username) is not None
 
 # Utility function to check allowed file types
 def allowed_file(filename):
@@ -45,69 +24,43 @@ def allowed_file(filename):
 
 @app.route('/')
 def home():
-    return render_template('Homepage.html')
-
+    return render_template('Homepage.html')  
 @app.route('/Login', methods=['GET', 'POST'])
 def Login():
     if request.method == 'POST':
-        email = request.form.get('email', '').strip()
-        password = request.form.get('password', '')
-
-        # Validate inputs
-        if not email or not password:
-            error = "Error: Email and password are required."
-            return render_template('Login.html', error=error)
-
-        if not validate_email(email):
-            error = "Error: Invalid email format."
-            return render_template('Login.html', error=error)
+        email = request.form.get('email')
+        password = request.form.get('password')
 
         # Find the user in the database
         user = users_collection.find_one({"email": email})
 
-        if user and bcrypt.check_password_hash(user["password"], password):
-            # Store user info in session
-            session['user_id'] = str(user["_id"])
-            session['username'] = user["username"]
-            session.permanent = True
-            return redirect(url_for('homepageafterlogin'))
+        if user:
+            # Verify the password
+            if bcrypt.check_password_hash(user["password"], password):
+                # Store user info in session
+                session['user_id'] = str(user["_id"])
+                session['username'] = user["username"]
+                return redirect(url_for('homepageafterlogin'))
+            else:
+                error = "Error: Invalid email or password."
         else:
-            error = "Error: Invalid email or password."
-            return render_template('Login.html', error=error)
+            error = "Error: User not found."
+
+        return render_template('Login.html', error=error)
 
     return render_template('Login.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        email = request.form.get('email', '').strip()
-        password = request.form.get('password', '')
-        confirm_password = request.form.get('confirm_password', '')
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
 
-        # Validate inputs
-        if not username or not email or not password:
-            return render_template('register.html', error="Error: All fields are required.")
-
-        if not validate_username(username):
-            return render_template('register.html', error="Error: Username must be 3-20 characters and contain only letters, numbers, and underscores.")
-
-        if not validate_email(email):
-            return render_template('register.html', error="Error: Invalid email format.")
-
-        if not validate_password(password):
-            return render_template('register.html', error="Error: Password must be at least 8 characters long.")
-
-        if password != confirm_password:
-            return render_template('register.html', error="Error: Passwords do not match.")
-
-        # Check if the email or username is already registered
-        existing_user = users_collection.find_one({"$or": [{"email": email}, {"username": username}]})
+        # Check if the email is already registered
+        existing_user = users_collection.find_one({"email": email})
         if existing_user:
-            if existing_user.get("email") == email:
-                return render_template('register.html', error="Error: This email has already been registered.")
-            else:
-                return render_template('register.html', error="Error: This username is already taken.")
+            return render_template('register.html', error="Error: This Email has already been registered.")
 
         # Hash the password before storing
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -117,7 +70,6 @@ def register():
             "username": username,
             "email": email,
             "password": hashed_password,
-            "bio": "",
             "created_at": datetime.now(timezone.utc).isoformat()
         })
 
@@ -127,16 +79,8 @@ def register():
     return render_template('register.html')
 
 
-@app.route('/logout')
-def logout():
-    """Logout route to clear session"""
-    session.clear()
-    return redirect(url_for('home'))
-
 @app.route('/homepageafterlogin', methods=['GET', 'POST'])
 def homepageafterlogin():
-    if 'user_id' not in session:
-        return redirect(url_for('Login'))
     return render_template('homepageafterlogin.html')
 
 @app.route('/textsummary')
@@ -145,8 +89,6 @@ def textsummary():
 
 @app.route('/textsummaryafterlogin')
 def textsummaryafterlogin():
-    if 'user_id' not in session:
-        return redirect(url_for('Login'))
     return render_template('textsummaryafterlogin.html')
 
 @app.route('/savedsummarypage', methods=['GET'])
@@ -167,21 +109,14 @@ def savedsummarypage():
 @app.route('/summary')
 def summary():
     return render_template('summary.html')
-
 @app.route('/summaryafterlogin')
 def summaryafterlogin():
-    if 'user_id' not in session:
-        return redirect(url_for('Login'))
     return render_template('summaryafterlogin.html')
-
 @app.route('/summarypagefortext')
 def summarypagefortext():
     return render_template('summarypagefortext.html')
-
 @app.route('/summarypageafterloginfortext')
 def summarypageafterloginfortext():
-    if 'user_id' not in session:
-        return redirect(url_for('Login'))
     return render_template('summarypageafterloginfortext.html')
 @app.route('/user', methods=['GET', 'POST'])
 def user():
