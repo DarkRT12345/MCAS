@@ -38,8 +38,8 @@
             <div class="savedsummaries">
                 <h3><a href="{{ url_for('savedsummarypage') }}">Saved Summaries</a></h3>
             </div>
-            <form action="{{ url_for('home') }}">
-                <button>Logout</button>
+            <form action="{{ url_for('logout') }}" method="get">
+                <button type="submit">Logout</button>
             </form>
         </div>
     </div>
